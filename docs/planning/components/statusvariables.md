@@ -1,0 +1,1 @@
+Status variables are global varibles that can be read and modified by other components.
