@@ -1,6 +1,7 @@
 #include "intrinsics.h"
 #include <msp430.h>
 #include <stdbool.h>
+#include "statusled.c"
 
 #define code "5381"
 
@@ -107,6 +108,8 @@ int main(void)
                 input_index = 0;
             }
         }
+
+        updateled();
     }
 }
 
