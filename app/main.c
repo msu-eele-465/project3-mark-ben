@@ -1,3 +1,4 @@
+#include "intrinsics.h"
 #include <msp430.h>
 #include <stdbool.h>
 
@@ -15,7 +16,7 @@ const char keypad[4][4] = {                             // Matrix rep. of keypad
     {'4', '5', '6', 'B'},
     {'7', '8', '9', 'C'},
     {'*', '0', '#', 'D'},
-}
+};
 
 void setup_Heartbeat() {
     // --    LED   --
@@ -36,13 +37,11 @@ char pressedKey(void) {
     for (row = 0; row < 4; row++) {
         P1OUT &= ~(BIT2 | BIT3 | BIT5 | BIT6);          // Set rows low
         P1OUT |= rowPins[row];                          // current row high
-        __delay_cycles(2000);                           // C delay cycle function
+        __delay_cycles(1000);                           // C delay cycle function
 
         for(col = 0; col < 4; col++) {
             if(P1IN & colPins[col]) {
-                __delay_cycles(2000);
-                if (P1IN & colPins[col]) {
-                    return keypad[row][col];
+                return keypad[row][col];
                 }
             }
         }
@@ -52,7 +51,7 @@ char pressedKey(void) {
 
 void check_key() {
     if (input_index == 4) {                             // Only check after 4 digits entered
-        keypad_input[4] = "\0";
+        keypad_input[4] = '\0';
         if (strcmp(keypad_input, code) == 0) {
             state_variable = 1;
         } else {
@@ -71,15 +70,17 @@ int main(void)
     P6REN |= (BIT0 | BIT1 | BIT2 | BIT3);               // Pulldown resistors on cols
     P1OUT &= ~(BIT0 | BIT1 | BIT2 | BIT3);              // rows low
 
+    setup_Heartbeat();
     // Disable the GPIO power-on default high-impedance mdoe to activate
     // previously configure port settings
     PM5CTL0 &= ~LOCKLPM5;
+    __enable_interrupt();
 
     while(true)
     {
         if (state_variable == 0) {                      // Locked
             char key = pressedKey();
-            if (key != "\0") {
+            if (key != '\0') {
                 state_variable = 2;
                 if (input_index < 4) {
                     keypad_input[input_index++] = key;
