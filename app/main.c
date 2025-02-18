@@ -1,21 +1,17 @@
 #include "intrinsics.h"
 #include <msp430.h>
 #include <stdbool.h>
-#include "statusled.c"
+#include "../src/statusled.c"
 
 #define code "5381"
 
-volatile int state_variable = 0;                        // 0 = Locked, 1 = Unlocked, 2 = Unlocking
 char keypad_input[5] = {};
 volatile int input_index = 0;
 
 const unsigned rowPins[4] = {BIT2, BIT3, BIT5, BIT6};
 const unsigned colPins[4] = {BIT0, BIT1, BIT2, BIT3};
 
-volatile int status_led_count = 0;
-volatile int red_count = 0;
-volatile int green_count = 0;
-volatile int blue_count = 0;
+
 
 const char keypad[4][4] = {                             // Matrix rep. of keypad for pressedKey function
     {'1', '2', '3', 'A'},
@@ -35,10 +31,10 @@ void setup_Heartbeat() {
     TB0CCTL0 = CCIE;                                    // Enable Interrupt
     TB0CCR0 = 32820;                                    // 1 sec timer
     TB0EX0 = TBIDEX__8;                                 // D8
-    TB0CTL = TBSSEL0__SMCLK | MC__UP | ID__4;           // Small clock, Up counter,  D4
+    TB0CTL = TBSSEL__SMCLK | MC__UP | ID__4;           // Small clock, Up counter,  D4
 }
 
-char pressedKey(void) {
+char pressedKey() {
     int row, col;
     for (row = 0; row < 4; row++) {
         P1OUT &= ~(BIT2 | BIT3 | BIT5 | BIT6);          // Set rows low
@@ -48,7 +44,7 @@ char pressedKey(void) {
         for(col = 0; col < 4; col++) {
             if(P1IN & colPins[col]) {
                 return keypad[row][col];
-                }
+                
             }
         }
     }
@@ -72,7 +68,7 @@ void rgb_timer_setup() {
 
     TB1CCTL0 = CCIE;                                    // Enable Interrupt
     TB1CCR0 = 8205;                                     // 1 sec timer
-    TB1CTL = TBSSEL0__SMCLK | MC__UP;                   // Small clock, Up counter
+    TB1CTL = TBSSEL__SMCLK | MC__UP;                   // Small clock, Up counter
 }
 
 int main(void)
@@ -86,6 +82,7 @@ int main(void)
     P1OUT &= ~(BIT0 | BIT1 | BIT2 | BIT3);              // rows low
 
     setup_Heartbeat();
+    rgb_timer_setup();
     // Disable the GPIO power-on default high-impedance mdoe to activate
     // previously configure port settings
     PM5CTL0 &= ~LOCKLPM5;
@@ -93,8 +90,9 @@ int main(void)
 
     while(true)
     {
+        char key = '\0';
         if (state_variable == 0) {                      // Locked
-            char key = pressedKey();
+            key = pressedKey();
             if (key != '\0') {
                 state_variable = 2;
                 if (input_index < 4) {

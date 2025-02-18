@@ -1,6 +1,14 @@
 #include <msp430.h>
 #include <stdbool.h>
 
+
+volatile int state_variable = 0;                        // 0 = Locked, 1 = Unlocked, 2 = Unlocking
+
+volatile int status_led_count = 0;
+volatile int red_count = 0;
+volatile int green_count = 0;
+volatile int blue_count = 0;
+
 //3.2 - Red 
 //3.3 - Green
 //3.7 - Blue
@@ -27,7 +35,7 @@ void updateled(void) {
 }
 
 #pragma vector=TIMER_B1_VECTOR
-__interrupt void Timer_B0_ISR(void) {
+__interrupt void Timer_B1_ISR(void) {
     status_led_count++;
 
     if (status_led_count > 255) {
