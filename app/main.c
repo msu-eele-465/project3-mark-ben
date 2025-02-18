@@ -11,6 +11,11 @@ volatile int input_index = 0;
 const unsigned rowPins[4] = {BIT2, BIT3, BIT5, BIT6};
 const unsigned colPins[4] = {BIT0, BIT1, BIT2, BIT3};
 
+volatile int status_led_count = 0;
+volatile int red_count = 0;
+volatile int green_count = 0;
+volatile int blue_count = 0;
+
 const char keypad[4][4] = {                             // Matrix rep. of keypad for pressedKey function
     {'1', '2', '3', 'A'},
     {'4', '5', '6', 'B'},
@@ -58,6 +63,15 @@ void check_key() {
             input_index = 0;
         }
     }
+}
+
+void rgb_timer_setup() {
+    P3DIR |= (BIT2 | BIT3 | BIT7);                      // Set as OUTPUTS
+    P3OUT |= (BIT2 | BIT3 | BIT7);                      // Start HIGH
+
+    TB1CCTL0 = CCIE;                                    // Enable Interrupt
+    TB1CCR0 = 8205;                                     // 1 sec timer
+    TB1CTL = TBSSEL0__SMCLK | MC__UP;                   // Small clock, Up counter
 }
 
 int main(void)
