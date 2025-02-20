@@ -34,8 +34,11 @@ void updateled(void) {
     }
 }
 
-#pragma vector=TIMER_B1_VECTOR
+#pragma vector=TIMER1_B1_VECTOR
 __interrupt void Timer_B1_ISR(void) {
+    
+    TB1CCTL1 &= ~CCIFG;
+
     status_led_count++;
 
     if (status_led_count > 255) {
@@ -62,5 +65,5 @@ __interrupt void Timer_B1_ISR(void) {
     } else {
         P3OUT &= ~BIT7;
     }
-
+    
 }

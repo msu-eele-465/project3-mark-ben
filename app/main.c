@@ -2,11 +2,17 @@
 #include <msp430.h>
 #include <stdbool.h>
 #include "../src/statusled.c"
+#include "msp430fr2355.h"
+#include <string.h>
 
-#define code "5381"
 
-char keypad_input[5] = {};
+
+extern void Timer_B1_ISR(void);
+
+char code[] = "5381";
+char keypad_input[4] = {};
 volatile int input_index = 0;
+
 
 const unsigned rowPins[4] = {BIT2, BIT3, BIT5, BIT6};
 const unsigned colPins[4] = {BIT0, BIT1, BIT2, BIT3};
@@ -24,7 +30,7 @@ void setup_Heartbeat() {
     // --    LED   --
     
     P6DIR |= BIT6;                                      // P6.6 as OUTPUT
-    P6OUT &= ~BIT6;                                     // Start LED off
+    P6OUT |= BIT6;                                     // Start LED off
 
     // -- Timer B0 --
 
@@ -34,17 +40,25 @@ void setup_Heartbeat() {
     TB0CTL = TBSSEL__SMCLK | MC__UP | ID__4;           // Small clock, Up counter,  D4
 }
 
+
+
 char pressedKey() {
     int row, col;
     for (row = 0; row < 4; row++) {
         P1OUT &= ~(BIT2 | BIT3 | BIT5 | BIT6);          // Set rows low
         P1OUT |= rowPins[row];                          // current row high
-        __delay_cycles(1000);                           // C delay cycle function
 
         for(col = 0; col < 4; col++) {
-            if(P1IN & colPins[col]) {
-                return keypad[row][col];
+            __delay_cycles(10000);
+            if(!(P6IN & colPins[col])) {
+                __delay_cycles(1000);
+                if(!(P6IN & colPins[col])) {
+                char keyP = keypad[row][col];
                 
+                while(!(P6IN & colPins[col]));
+                
+                return keyP;
+                }
             }
         }
     }
@@ -52,12 +66,15 @@ char pressedKey() {
 }
 
 void check_key() {
-    if (input_index == 4) {                             // Only check after 4 digits entered
-        keypad_input[4] = '\0';
-        if (strcmp(keypad_input, code) == 0) {
+    
+    if (input_index == 3) {                             // Only check after 4 digits entered
+
+        if (strncmp(keypad_input, code, 4) == 0) {
+            
             state_variable = 1;
         } else {
             input_index = 0;
+            memset(keypad_input, 0, sizeof(keypad_input));  // Clear the input buffer
         }
     }
 }
@@ -66,9 +83,9 @@ void rgb_timer_setup() {
     P3DIR |= (BIT2 | BIT3 | BIT7);                      // Set as OUTPUTS
     P3OUT |= (BIT2 | BIT3 | BIT7);                      // Start HIGH
 
-    TB1CCTL0 = CCIE;                                    // Enable Interrupt
-    TB1CCR0 = 8205;                                     // 1 sec timer
-    TB1CTL = TBSSEL__SMCLK | MC__UP;                   // Small clock, Up counter
+    TB1CCTL1 = CCIE;                                    // Enable Interrupt
+    TB1CCR1 = 8205;                                     // 1 sec timer
+    TB1CTL = TBSSEL__SMCLK | MC__UP;                     // Small clock, Up counter
 }
 
 int main(void)
@@ -76,10 +93,11 @@ int main(void)
     // Stop watchdog timer
     WDTCTL = WDTPW | WDTHOLD;                           // Stop watchdog timer
     
-    P1DIR |= (BIT2 | BIT3 | BIT5 | BIT6);               // rows = OUTPUT
+    P1DIR |= (BIT0 | BIT2 | BIT3 | BIT5 | BIT6);        // rows = OUTPUT
     P6DIR &= ~(BIT0 | BIT1 | BIT2 | BIT3);              // cols = INPUT
     P6REN |= (BIT0 | BIT1 | BIT2 | BIT3);               // Pulldown resistors on cols
-    P1OUT &= ~(BIT0 | BIT1 | BIT2 | BIT3);              // rows low
+    P1OUT &= ~(BIT2 | BIT3 | BIT5 | BIT6);              // rows low
+    P1OUT &= ~BIT0;
 
     setup_Heartbeat();
     rgb_timer_setup();
@@ -90,17 +108,21 @@ int main(void)
 
     while(true)
     {
-        char key = '\0';
-        if (state_variable == 0) {                      // Locked
-            key = pressedKey();
+        char key = pressedKey();
+        if (state_variable == 0 || state_variable == 2) {                      // Locked
+            
             if (key != '\0') {
+                
                 state_variable = 2;
-                if (input_index < 4) {
+                if (input_index < 3) {
                     keypad_input[input_index++] = key;
+                } else if (input_index == 3) {
+                    
+                    check_key();
                 }
-                check_key();
             }   
         } else if (state_variable == 1) {               // Unlocked
+            P1OUT ^= BIT0;
             if (key == 'D') {
                 state_variable = 0;
                 input_index = 0;
@@ -115,8 +137,9 @@ int main(void)
 
 // ----- Timer B0 Heartbeat ---------------
 
-#pragma vector=TIMER_B0_VECTOR
+#pragma vector=TIMER0_B0_VECTOR
 __interrupt void Timer_B0_ISR(void) {
+    TB0CCTL0 &= ~CCIFG;
     P6OUT ^= BIT6;
 }
 
