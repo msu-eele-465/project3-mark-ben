@@ -50,12 +50,12 @@ char pressedKey() {
 
         for(col = 0; col < 4; col++) {
             __delay_cycles(10000);
-            if(!(P6IN & colPins[col])) {
+            if((P6IN & colPins[col]) != 0) {
                 __delay_cycles(1000);
-                if(!(P6IN & colPins[col])) {
+                if((P6IN & colPins[col]) != 0) {
                 char keyP = keypad[row][col];
                 
-                while(!(P6IN & colPins[col]));
+                while((P6IN & colPins[col]) != 0);
                 
                 return keyP;
                 }
@@ -80,12 +80,16 @@ void check_key() {
 }
 
 void rgb_timer_setup() {
-    P3DIR |= (BIT2 | BIT3 | BIT7);                      // Set as OUTPUTS
-    P3OUT |= (BIT2 | BIT3 | BIT7);                      // Start HIGH
+    P3DIR |= (BIT2 | BIT7);                      // Set as OUTPUTS
+    P2DIR |= BIT4;
+    P3OUT |= (BIT2 | BIT7);                      // Start HIGH
+    P2OUT |= BIT4;
 
-    TB1CCTL1 = CCIE;                                    // Enable Interrupt
-    TB1CCR1 = 8205;                                     // 1 sec timer
-    TB1CTL = TBSSEL__SMCLK | MC__UP;                     // Small clock, Up counter
+    TB1CTL |= TBCLR;
+    TB1CTL |= (TBSSEL__ACLK | MC__UP);                     // Small clock, Up counter
+    TB1CCR0 = 3;                                        // 1 sec timer
+    TB1CCTL0 |= CCIE;                                    // Enable Interrupt
+    TB1CCTL0 &= ~CCIFG;
 }
 
 int main(void)
@@ -96,6 +100,7 @@ int main(void)
     P1DIR |= (BIT0 | BIT2 | BIT3 | BIT5 | BIT6);        // rows = OUTPUT
     P6DIR &= ~(BIT0 | BIT1 | BIT2 | BIT3);              // cols = INPUT
     P6REN |= (BIT0 | BIT1 | BIT2 | BIT3);               // Pulldown resistors on cols
+    P6OUT &= ~(BIT0 | BIT1 | BIT2 | BIT3); 
     P1OUT &= ~(BIT2 | BIT3 | BIT5 | BIT6);              // rows low
     P1OUT &= ~BIT0;
 

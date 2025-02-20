@@ -10,7 +10,7 @@ volatile int green_count = 0;
 volatile int blue_count = 0;
 
 //3.2 - Red 
-//3.3 - Green
+//2.4 - Green
 //3.7 - Blue
 
 // This function will update the current status of the led
@@ -34,36 +34,35 @@ void updateled(void) {
     }
 }
 
-#pragma vector=TIMER1_B1_VECTOR
+#pragma vector=TIMER1_B0_VECTOR
 __interrupt void Timer_B1_ISR(void) {
-    
-    TB1CCTL1 &= ~CCIFG;
+
+    TB1CCTL0 &= ~CCIFG;
 
     status_led_count++;
 
-    if (status_led_count > 255) {
+    if (status_led_count > 0xff) {
         status_led_count = 0;
     }
 
     // RED PWM
-    if (status_led_count < red_count) {
+    if (status_led_count <= red_count) {
         P3OUT |= BIT2;
     } else {
         P3OUT &= ~BIT2;
     }
 
     // GREEN PWM
-    if (status_led_count < green_count) {
-        P3OUT |= BIT3;
+    if (status_led_count <= green_count) {
+        P2OUT |= BIT4;
     } else {
-        P3OUT &= ~BIT3;
+        P2OUT &= ~BIT4;
     }
 
     // BLUE PWM
-    if (status_led_count < blue_count) {
+    if (status_led_count <= blue_count) {
         P3OUT |= BIT7;
     } else {
         P3OUT &= ~BIT7;
     }
-    
 }
