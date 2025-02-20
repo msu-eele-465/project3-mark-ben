@@ -86,8 +86,8 @@ void rgb_timer_setup() {
     P2OUT |= BIT4;
 
     TB1CTL |= TBCLR;
-    TB1CTL |= (TBSSEL__ACLK | MC__UP);                     // Small clock, Up counter
-    TB1CCR0 = 3;                                        // 1 sec timer
+    TB1CTL |= (TBSSEL__SMCLK | MC__UP);                     // Small clock, Up counter
+    TB1CCR0 = 512;                                        // 1 sec timer
     TB1CCTL0 |= CCIE;                                    // Enable Interrupt
     TB1CCTL0 &= ~CCIFG;
 }

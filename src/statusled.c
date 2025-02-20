@@ -17,19 +17,19 @@ volatile int blue_count = 0;
 void updateled(void) {
     switch (state_variable) {
         case 0:
-            red_count = 0xc4;
-            green_count = 0x3e;
-            blue_count = 0x1d;
+            red_count = 0xc4 / 8;
+            green_count = 0x3e / 8;
+            blue_count = 0x1d / 8;
             break;
         case 1:
-            red_count = 0x1d;
-            green_count = 0xa2;
-            blue_count = 0xc4;
+            red_count = 0x1d / 8;
+            green_count = 0xa2 / 8;
+            blue_count = 0xc4 / 8;
             break;
         case 2:
-            red_count = 0xc4;
-            green_count = 0x92;
-            blue_count = 0x1d;
+            red_count = 0xc4 / 8;
+            green_count = 0x92 / 8;
+            blue_count = 0x1d / 8;
             break;
     }
 }
@@ -41,7 +41,7 @@ __interrupt void Timer_B1_ISR(void) {
 
     status_led_count++;
 
-    if (status_led_count > 0xff) {
+    if (status_led_count > 0xff / 8) {
         status_led_count = 0;
     }
 
