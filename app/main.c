@@ -47,7 +47,7 @@ char pressedKey(void) {
         for(col = 0; col < 4; col++) {
             if(P1IN & colPins[col]) {
                 return keypad[row][col];
-                }
+                
             }
         }
     }
