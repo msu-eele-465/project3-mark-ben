@@ -31,7 +31,7 @@ void setup_Heartbeat() {
     P6OUT |= BIT6;                                     // Start LED off
 
     // -- Timer B0 --
-
+    TB0R = 0;
     TB0CCTL0 = CCIE;                                    // Enable Interrupt
     TB0CCR0 = 32820;                                    // 1 sec timer
     TB0EX0 = TBIDEX__8;                                 // D8
@@ -39,15 +39,17 @@ void setup_Heartbeat() {
     TB0CCTL0 &= ~CCIFG;
 }
 
-void unlock_timer_setup() {
-   TB3CCTL0 = CCIE;                                   // Enable Timer_A interrupt
-    TB3CCR0 = 32768 * 5;                               // 5s countdown 
+void setup_unlock_timer() {
+    TB3R = 0;
+    TB3CCTL0 = CCIE;                                   // Enable Timer_B3 interrupt
+    TB3CCR0 = 156250;                               // 5s countdown 
     TB3EX0 = TBIDEX__8;                                 // D8
     TB3CTL = TBSSEL__SMCLK | MC__UP | ID__4;           // Small clock, Up counter,  D4
+    TB3CCTL0 &= ~CCIFG;
 }
 
 void start_unlock_timer() {
-    TB3CTL |= TBCLR; // Reset timer
+    TB3R = 0;
     TB3CTL |= MC_1;  // Start timer in up mode
 }
 
@@ -61,7 +63,8 @@ void rgb_timer_setup() {
     P3OUT |= (BIT2 | BIT7);                      // Start HIGH
     P2OUT |= BIT4;
 
-    TB1CTL |= TBCLR;
+//   TB1CTL |= TBCLR;
+    TB1R = 0;
     TB1CTL |= (TBSSEL__SMCLK | MC__UP);                     // Small clock, Up counter
     TB1CCR0 = 512;                                        // 1 sec timer
     TB1CCTL0 |= CCIE;                                    // Enable Interrupt
@@ -76,7 +79,7 @@ char pressedKey() {
         P1OUT |= rowPins[row];                          // current row high
 
         for(col = 0; col < 4; col++) {
-            __delay_cycles(10000);
+            __delay_cycles(1000);
             if((P6IN & colPins[col]) != 0) {
                 __delay_cycles(1000);
                 if((P6IN & colPins[col]) != 0) {
@@ -102,21 +105,19 @@ void check_key() {
             }
         }
         if(flag == 0){                                  // Code is correct
-            stop_unlock_timer();
+//            stop_unlock_timer();
             state_variable = 1;
+            input_index = 0;
             memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         } else {
-            stop_unlock_timer();
+//            stop_unlock_timer();
+            state_variable = 0;
             input_index = 0;
             memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         }
             
             
-        } else {
-            stop_unlock_timer();
-            input_index = 0;
-            memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
-        }
+    }
     
 }
 
@@ -131,10 +132,11 @@ int main(void)
     P6OUT &= ~(BIT0 | BIT1 | BIT2 | BIT3); 
     P1OUT &= ~(BIT2 | BIT3 | BIT5 | BIT6);              // rows low
     P1OUT &= ~BIT0;
-
+    
+//    setup_unlock_timer();
     setup_Heartbeat();
     rgb_timer_setup();
-    setup_unlock_timer();
+    
     // Disable the GPIO power-on default high-impedance mdoe to activate
     // previously configure port settings
     PM5CTL0 &= ~LOCKLPM5;
@@ -146,23 +148,23 @@ int main(void)
         if (state_variable == 0 || state_variable == 2) {                      // Locked
             
             if (key != '\0') {
-                if (input_index == 0) {
-                    start_unlock_timer();
-                }    
+//                if (input_index == 0) {
+//                    start_unlock_timer();
+//                }    
                 state_variable = 2;
                 if (input_index < 3) {
-                    keypad_input[input_index++] = key;
+                    keypad_input[input_index] = key;
+                    input_index++;
                 } else if (input_index == 3) {
                     
                     check_key();
                 }
             }   
         } else if (state_variable == 1) {               // Unlocked
-            P1OUT ^= BIT0;
             if (key == 'D') {
-                memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
                 state_variable = 0;
                 input_index = 0;
+                memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
             }
         }
 
@@ -178,7 +180,7 @@ __interrupt void Timer_B0_ISR(void) {
     P6OUT ^= BIT6;
 }
 
-#pragma vector=TIMER3_B7_VECTOR
+#pragma vector=TIMER3_B0_VECTOR
 __interrupt void Timer_B3_ISR(void) {
     
     TB3CCTL0 &= ~CCIFG;
