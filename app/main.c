@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include "../src/statusled.c"
 #include "msp430fr2355.h"
-#include <string.h>
 
 
 
@@ -12,7 +11,6 @@ extern void Timer_B1_ISR(void);
 char code[] = "5381";
 char keypad_input[4] = {};
 volatile int input_index = 0;
-
 
 const unsigned rowPins[4] = {BIT2, BIT3, BIT5, BIT6};
 const unsigned colPins[4] = {BIT0, BIT1, BIT2, BIT3};
@@ -38,8 +36,37 @@ void setup_Heartbeat() {
     TB0CCR0 = 32820;                                    // 1 sec timer
     TB0EX0 = TBIDEX__8;                                 // D8
     TB0CTL = TBSSEL__SMCLK | MC__UP | ID__4;           // Small clock, Up counter,  D4
+    TB0CCTL0 &= ~CCIFG;
 }
 
+void unlock_timer_setup() {
+   TB3CCTL0 = CCIE;                                   // Enable Timer_A interrupt
+    TB3CCR0 = 32768 * 5;                               // 5s countdown 
+    TB3EX0 = TBIDEX__8;                                 // D8
+    TB3CTL = TBSSEL__SMCLK | MC__UP | ID__4;           // Small clock, Up counter,  D4
+}
+
+void start_unlock_timer() {
+    TB3CTL |= TBCLR; // Reset timer
+    TB3CTL |= MC_1;  // Start timer in up mode
+}
+
+void stop_unlock_timer() {
+    TB3CTL &= ~MC_1; // Stop timer
+}
+
+void rgb_timer_setup() {
+    P3DIR |= (BIT2 | BIT7);                      // Set as OUTPUTS
+    P2DIR |= BIT4;
+    P3OUT |= (BIT2 | BIT7);                      // Start HIGH
+    P2OUT |= BIT4;
+
+    TB1CTL |= TBCLR;
+    TB1CTL |= (TBSSEL__SMCLK | MC__UP);                     // Small clock, Up counter
+    TB1CCR0 = 512;                                        // 1 sec timer
+    TB1CCTL0 |= CCIE;                                    // Enable Interrupt
+    TB1CCTL0 &= ~CCIFG;
+}
 
 
 char pressedKey() {
@@ -75,32 +102,22 @@ void check_key() {
             }
         }
         if(flag == 0){                                  // Code is correct
+            stop_unlock_timer();
             state_variable = 1;
             memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         } else {
+            stop_unlock_timer();
             input_index = 0;
             memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         }
             
             
         } else {
+            stop_unlock_timer();
             input_index = 0;
             memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         }
     
-}
-
-void rgb_timer_setup() {
-    P3DIR |= (BIT2 | BIT7);                      // Set as OUTPUTS
-    P2DIR |= BIT4;
-    P3OUT |= (BIT2 | BIT7);                      // Start HIGH
-    P2OUT |= BIT4;
-
-    TB1CTL |= TBCLR;
-    TB1CTL |= (TBSSEL__SMCLK | MC__UP);                     // Small clock, Up counter
-    TB1CCR0 = 512;                                        // 1 sec timer
-    TB1CCTL0 |= CCIE;                                    // Enable Interrupt
-    TB1CCTL0 &= ~CCIFG;
 }
 
 int main(void)
@@ -117,6 +134,7 @@ int main(void)
 
     setup_Heartbeat();
     rgb_timer_setup();
+    setup_unlock_timer();
     // Disable the GPIO power-on default high-impedance mdoe to activate
     // previously configure port settings
     PM5CTL0 &= ~LOCKLPM5;
@@ -128,7 +146,9 @@ int main(void)
         if (state_variable == 0 || state_variable == 2) {                      // Locked
             
             if (key != '\0') {
-                
+                if (input_index == 0) {
+                    start_unlock_timer();
+                }    
                 state_variable = 2;
                 if (input_index < 3) {
                     keypad_input[input_index++] = key;
@@ -152,12 +172,19 @@ int main(void)
 
 // ----- ISR ------------------------------
 
-// ----- Timer B0 Heartbeat ---------------
-
 #pragma vector=TIMER0_B0_VECTOR
 __interrupt void Timer_B0_ISR(void) {
     TB0CCTL0 &= ~CCIFG;
     P6OUT ^= BIT6;
 }
 
-// ---- END TimerB0 -----------------------
+#pragma vector=TIMER3_B7_VECTOR
+__interrupt void Timer_B3_ISR(void) {
+    
+    TB3CCTL0 &= ~CCIFG;
+    
+    input_index = 0;
+    state_variable = 0;
+    memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
+
+}
