@@ -66,17 +66,28 @@ char pressedKey() {
 }
 
 void check_key() {
-    
+    int i, flag = 0;
     if (input_index == 3) {                             // Only check after 4 digits entered
 
-        if (strncmp(keypad_input, code, 4) == 0) {
-            
+        for(i=0; i<3; i++) {
+            if(keypad_input[i] != code[i]) {
+                flag = 1;
+            }
+        }
+        if(flag == 0){                                  // Code is correct
             state_variable = 1;
+            memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         } else {
             input_index = 0;
-            memset(keypad_input, 0, sizeof(keypad_input));  // Clear the input buffer
+            memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         }
-    }
+            
+            
+        } else {
+            input_index = 0;
+            memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
+        }
+    
 }
 
 void rgb_timer_setup() {
@@ -129,6 +140,7 @@ int main(void)
         } else if (state_variable == 1) {               // Unlocked
             P1OUT ^= BIT0;
             if (key == 'D') {
+                memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
                 state_variable = 0;
                 input_index = 0;
             }
