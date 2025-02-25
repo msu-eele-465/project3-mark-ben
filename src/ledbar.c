@@ -12,9 +12,13 @@ const int pattern_3[6] = {0b00011000, 0b00100100,
                           0b01000010, 0b00100100};
 
 void setup_ledbar_timer() {
-    TB2CCTL0 = CCIE;                    // Enable Timer B2 interrupt
-    TB2CCR0 =  (int) ((1.0 / 32768) * base_tp);  // Set interval 
-    TB2CTL = TBSSEL__SMCLK | MC__UP;     // SMCLK, Up mode
+    TB2CTL |= TBSSEL__ACLK | MC__UP;     // ACLK, Up mode
+    TB2CCR0 =  (int) (32768 * base_tp);  // Set interval 
+    P2DIR |= (BIT0 | BIT2 | BIT5);
+    P4DIR |= (BIT0 | BIT6 | BIT7 | BIT4);
+    P3DIR |= BIT0;
+    TB2CCTL0 |= CCIE;                    // Enable Timer B2 interrupt
+    TB2CCTL0 &= ~CCIFG;
 }
 
 void update_led_bar() {
@@ -110,6 +114,10 @@ void update_led_bar_pins(int pins) {
 
 #pragma vector=TIMER2_B0_VECTOR
 __interrupt void Timer_B2_ISR(void) {
+
+    TB2CCTL0 &= ~CCIFG;
+
     update_led_bar();
-    TB2CCR0 = (int) ((1.0 / 32768) * base_tp);
+    
+    TB2CCR0 = (int) (32768 * base_tp);
 }
