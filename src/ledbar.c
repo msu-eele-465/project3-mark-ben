@@ -6,8 +6,8 @@ volatile int step[4] = {0, 0, 0, 0};
 volatile float base_tp = 1.0;    // Default 1.0s
 
 
-const uint patern_1[2] = {0b10101010, 0b01010101};
-const uint patter_3[6] = {0b00011000, 0b00100100,
+const int pattern_1[2] = {0b10101010, 0b01010101};
+const int pattern_3[6] = {0b00011000, 0b00100100,
                           0b01000010, 0b10000001,
                           0b01000010, 0b00100100};
 
@@ -18,7 +18,7 @@ void setup_ledbar_timer() {
 }
 
 void update_led_bar() {
-    uint led_pins = 0;
+    int led_pins = 0;
     
     switch(pattern) {
     case 0:
@@ -33,7 +33,7 @@ void update_led_bar() {
         step[pattern] = (step[pattern] + 1) % 255;
         break;
     case 3:
-        led_pins = patern_3[step[pattern]];
+        led_pins = pattern_3[step[pattern]];
         step[pattern] = (step[pattern] + 1) % 6;
         break; 
     }
@@ -49,50 +49,59 @@ void change_led_pattern(int new_pattern) {
     pattern = new_pattern;
 }
 
-void update_led_bar_pins(uint pins) {
+void update_led_bar_pins(int pins) {
+    int current_pins = pins;
+
     if ((current_pins & 0b00000001) == 1) {
         P2OUT |= BIT0;
     } else {
         P2OUT &= ~BIT0;
     }
+    current_pins = current_pins >> 1;
 
-    if ((current_pins & (0b00000001 << 1)) == 1) {
+    if ((current_pins & 0b00000001) == 1) {
         P2OUT |= BIT2;
     } else {
         P2OUT &= ~BIT2;
     }
+    current_pins = current_pins >> 1;
 
-    if ((current_pins & (0b00000001 << 2)) == 1) {
+    if ((current_pins & 0b00000001) == 1) {
         P4OUT |= BIT0;
     } else {
         P4OUT &= ~BIT0;
     }
+    current_pins = current_pins >> 1;
 
-    if ((current_pins & (0b00000001 << 3)) == 1) {
+    if ((current_pins & 0b00000001) == 1) {
         P4OUT |= BIT6;
     } else {
         P4OUT &= ~BIT6;
     }
+    current_pins = current_pins >> 1;
 
-    if ((current_pins & (0b00000001 << 4)) == 1) {
+    if ((current_pins & 0b00000001) == 1) {
         P4OUT |= BIT7;
     } else {
         P4OUT &= ~BIT7;
     }
+    current_pins = current_pins >> 1;
 
-    if ((current_pins & (0b00000001 << 5)) == 1) {
+    if ((current_pins & 0b00000001) == 1) {
         P4OUT |= BIT4;
     } else {
         P4OUT &= ~BIT4;
     }
+    current_pins = current_pins >> 1;
 
-    if ((current_pins & (0b00000001 << 6)) == 1) {
+    if ((current_pins & 0b00000001) == 1) {
         P2OUT |= BIT5;
     } else {
         P2OUT &= ~BIT5;
     }
+    current_pins = current_pins >> 1;
 
-    if ((current_pins & (0b00000001 << 7)) == 1) {
+    if ((current_pins & 0b00000001) == 1) {
         P2OUT |= BIT0;
     } else {
         P2OUT &= ~BIT0;

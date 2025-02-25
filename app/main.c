@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "../src/statusled.c"
 #include "msp430fr2355.h"
+#include "../src/ledbar.c"
 
 
 
