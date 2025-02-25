@@ -4,10 +4,10 @@
 
 volatile int state_variable = 0;                        // 0 = Locked, 1 = Unlocked, 2 = Unlocking
 
-volatile int status_led_count = 0;
-volatile int red_count = 0;
-volatile int green_count = 0;
-volatile int blue_count = 0;
+volatile int status_led_count = 0;  // Current count in the PWM cycle
+volatile int red_count = 0; // Red pulse width
+volatile int green_count = 0; // Green pulse width
+volatile int blue_count = 0; // Blue pulse width
 
 //3.2 - Red 
 //2.4 - Green
@@ -15,6 +15,8 @@ volatile int blue_count = 0;
 
 // This function will update the current status of the led
 void updateled(void) {
+
+    // Update the pulse widths based on the current state
     switch (state_variable) {
         case 0:
             red_count = 0xc4 / 8;
@@ -41,6 +43,7 @@ __interrupt void Timer_B1_ISR(void) {
 
     status_led_count++;
 
+    // Reset the PWM cycle
     if (status_led_count > 0xff / 8) {
         status_led_count = 0;
     }
