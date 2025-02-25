@@ -1,7 +1,7 @@
 #include <msp430.h>
 #include <string.h>
 
-volatile int pattern = 0;
+volatile int pattern = -1;
 volatile int step[4] = {0, 0, 0, 0};
 volatile float base_tp = 1.0;    // Default 1.0s
 
