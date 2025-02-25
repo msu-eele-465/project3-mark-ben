@@ -137,7 +137,7 @@ int main(void)
 //    setup_unlock_timer();
     setup_Heartbeat();
     rgb_timer_setup();
-    
+    setup_ledbar_timer();
     // Disable the GPIO power-on default high-impedance mdoe to activate
     // previously configure port settings
     PM5CTL0 &= ~LOCKLPM5;
@@ -162,13 +162,48 @@ int main(void)
                 }
             }   
         } else if (state_variable == 1) {               // Unlocked
-            if (key == 'D') {
+/*             if (key == 'D') {
                 state_variable = 0;
                 input_index = 0;
                 memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
-            }
-        }
+            } */
 
+            switch (key) {
+                case 'D':
+                    state_variable = 0;
+                    input_index = 0;
+                    memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
+                    break;
+                case '0':
+                    change_led_pattern(0);
+                    break;
+                case '1':
+                    change_led_pattern(1);
+                    break;
+                case '2':
+                    change_led_pattern(2);
+                    break;
+                case '3':
+                    change_led_pattern(3);
+                    break;
+                case 'A':
+                    if (base_tp > 0.25) {
+                        base_tp -= 0.25;
+                    }
+                    break;
+                case 'B':
+                    base_tp += 0.25;
+                    break;
+                default:
+                    input_index = 0;
+                    memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
+                    break;
+            }
+
+            input_index = 0;
+            memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
+        }
+        update_led_bar();
         updateled();
     }
 }

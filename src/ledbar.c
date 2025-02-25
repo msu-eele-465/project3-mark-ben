@@ -38,7 +38,7 @@ void update_led_bar() {
         break; 
     }
 
-    change_led_pattern(led_pins);
+    update_led_bar_pins(led_pins);
 }
 
 void change_led_pattern(int new_pattern) {
@@ -102,9 +102,9 @@ void update_led_bar_pins(int pins) {
     current_pins = current_pins >> 1;
 
     if ((current_pins & 0b00000001) == 1) {
-        P2OUT |= BIT0;
+        P3OUT |= BIT0;
     } else {
-        P2OUT &= ~BIT0;
+        P3OUT &= ~BIT0;
     }
 }
 
