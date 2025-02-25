@@ -203,7 +203,6 @@ int main(void)
             input_index = 0;
             memset(keypad_input, 0, sizeof(keypad_input));  // Clear input
         }
-        update_led_bar();
         updateled();
     }
 }
