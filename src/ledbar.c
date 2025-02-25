@@ -3,10 +3,10 @@
 
 volatile int pattern = -1; // Current pattern
 volatile int step[4] = {0, 0, 0, 0}; // Current step in each pattern
-volatile float base_tp = 1.0;    // Default 1.0s
+volatile float base_tp = 0.5;    // Default 1.0s
 
 
-const int pattern_1[2] = {0b10101010, 0b01010101};  // Pattern 1
+const int pattern_1[4] = {0b10101010, 0b10101010, 0b01010101, 0b01010101};  // Pattern 1
 const int pattern_3[6] = {0b00011000, 0b00100100,   // Pattern 3
                           0b01000010, 0b10000001,
                           0b01000010, 0b00100100};
@@ -35,7 +35,7 @@ void update_led_bar() {
         break;
     case 1:
         led_pins = pattern_1[step[pattern]]; // Pattern 1
-        step[pattern] = (step[pattern] + 1) % 2; // advance to the next step
+        step[pattern] = (step[pattern] + 1) % 4; // advance to the next step
         break;
     case 2:
         led_pins = step[pattern]; // Pattern 2 
